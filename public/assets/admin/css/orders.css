@@ -1,0 +1,4 @@
+.pay-seperately {
+    display: flex;
+    flex-direction: column;
+}
