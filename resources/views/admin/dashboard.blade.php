@@ -431,11 +431,15 @@
                       @break
 
                   @default
-                  <a href="{{route('admin.order.update.state',['sub_order_id'=> $s_order->id,'state'=>1 ])}}" class="btn btn-success w-100">
+                  <a href="{{route('admin.order.update.state',['sub_order_id'=> $s_order->id,'state'=>1 ])}}" class="btn btn-success w-100" >
                       Commande traitée
                       <i class="fa fa-arrow-right mx-2"></i>
                   </a>
-
+                  <form action="{{ route('admin.product.order.delete') }}" method="POST">
+                    @csrf
+                    <input type="number" name="order_id" value="{{ $s_order->order->id }}" hidden>
+                    <button type="submit" class="btn btn-secondary w-100 mt-2">Refuser la commande</button>
+                  </form>
                   @endswitch
 
                 </div>
