@@ -42,7 +42,9 @@ class PosController extends Controller
 
         $data['pcats'] = $pcats;
         $data['cart'] = Session::get('pos_cart');
-
+        foreach ($pcats as $prod ) {
+            $data['productsss'] = $prod['products'];
+        }
         // disabled days
         $days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
         $disDays = [];
@@ -82,6 +84,9 @@ class PosController extends Controller
         $data['postcodes'] = PostalCode::where('language_id', $lang->id)->orderBy('serial_number', 'ASC')->get();
 
         $data['pcats'] = $pcats;
+        foreach ($pcats as $prod ) {
+            $data['products'] = $prod['products'];
+        }
         $data['cart'] = Session::get('pos_cart');
 
         // disabled days

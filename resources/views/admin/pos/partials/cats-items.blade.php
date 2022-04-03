@@ -19,6 +19,7 @@
                 <div class="card-body px-2 pb-1">
                     <div class="tab-content" id="v-pills-tabContent">
                         @foreach ($pcats as $pcat)
+                        {{$productsss}}
                         <div class="tab-pane fade {{$loop->first ? 'show active' : ''}}" id="pcat{{$pcat->id}}" role="tabpanel" aria-labelledby="pcat{{$pcat->id}}-tab">
                             @if ($pcat->products()->count() > 0)
                             <div class="row no-gutters">
