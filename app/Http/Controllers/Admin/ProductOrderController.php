@@ -324,7 +324,6 @@ class ProductOrderController extends Controller
 
 
     public function updateOrderTable(Request $request){
-
         // current order that need to be changed
         $order = ProductOrder::find($request->order_id);
         $sub_order = SubOrder::with('products.item')->find($request->sub_order_id);
@@ -421,6 +420,122 @@ class ProductOrderController extends Controller
                 $id = explode("sub-order-product-",$key)[1];
                 array_push($sub_orders_products_ids,$id);
             }
+        }
+
+        if(empty($sub_orders_products_ids)) {
+            return redirect()->back();
+        }
+
+        $next_table = Table::where('table_no',$datas['table_number'])->first();
+
+
+        if($next_table->status == 0){
+            // table already have an order
+            $expected_order = ProductOrder::where('table_number',$datas['table_number'])->where('completed','no')->orderBy('id','desc')->first();
+            $expected_sub_order = SubOrder::where('type',$current_sub_order->type)->where('state',$current_sub_order->state)->where('product_orders_id',$expected_order->id)->orderBy('id','desc')->first();
+
+            if($expected_sub_order == null){
+                            $expected_sub_order = SubOrder::updateOrCreate(
+                                ['product_orders_id' => $expected_order->id , 'type' => $current_sub_order->type , 'state' => $current_sub_order->state],
+                                []
+                                );
+            }
+
+            // we add products to each others
+            foreach ($sub_orders_products_ids as $sub_order_product_id){
+                $sub_order_product = SubOrdersProducts::where('id',$sub_order_product_id)->with('item')->first();
+                $item = OrderItem::find( $sub_order_product->item->id);
+
+                $expected_orderitem = OrderItem::where('product_order_id',$expected_order->id)->where('product_id',$sub_order_product->item->product_id)
+                    ->where('notes',$sub_order_product->item->notes)->first();
+
+                if($expected_orderitem){
+                    // there is a product in expected sub order with same comment
+                    $expected_orderitem->qty = $expected_orderitem->qty +  $sub_order_product->item->qty;
+                    $expected_orderitem->save();
+                    // delete old sub order from list
+                    $sub_order_product->delete();
+                    $item->delete();
+                }else{
+
+                    $sub_order_product->sub_order_id = $expected_sub_order->id;
+                    $item->product_order_id = $expected_order->id;
+                    $item->save();
+                    $sub_order_product->save();
+                }
+
+            }
+
+
+        }else{
+            // we create a new order with selected products
+            $order = ProductOrder::find($datas['order_id']);
+            $newOrder = $order->replicate();
+            $newOrder->table_number = $datas['table_number'];
+            $newOrder->save();
+            $suborder_dish = SubOrder::updateOrCreate(
+                ['product_orders_id' => $newOrder->id , 'type' => 1 , 'state' => $current_sub_order->state],
+                []
+            );
+
+            $suborder_drink = SubOrder::updateOrCreate(
+                ['product_orders_id' => $newOrder->id , 'type' => 0 , 'state' => $current_sub_order->state],
+                []
+            );
+
+            // we add products to each others
+            foreach ($sub_orders_products_ids as $sub_order_product_id){
+
+                $sub_order_product = SubOrdersProducts::where('id',$sub_order_product_id)->with('item.product.category')->first();
+                $item = OrderItem::find( $sub_order_product->item->id);
+                $item->product_order_id = $newOrder->id;
+                $item->save();
+                $categoryType = $sub_order_product->item->product->category->type ;
+                if($categoryType == 0){
+                    $sub_order_product->sub_order_id = $suborder_drink->id;
+                }
+                else{
+                    $sub_order_product->sub_order_id = $suborder_dish->id;
+                }
+
+                $sub_order_product->save();
+
+
+            }
+
+                // table is now occuped
+                $next_table->status = 0 ;
+                $next_table->client_session_id = session()->getId() ;
+                $next_table->save();
+
+
+        }
+
+                // old table is now free if it has no product
+                $current_sub_order = SubOrder::with('order','products')->find($datas['sub_order_id']);
+                if(count($current_sub_order->products) == 0){
+                    $old_table = Table::where('table_no',$current_sub_order->order->table_number)->first();
+                    $old_table->status = 1 ;
+                    $old_table->client_session_id = null;
+                    $old_table->save();
+                }
+
+        return redirect()->back(); // to dashboard
+    }
+
+    public function transferProductsApi(Request $request){
+        $datas = $request->all();
+        $current_sub_order = SubOrder::with('order','products')->find($datas['sub_order_id']);
+        $sub_orders_products_ids = array();
+        foreach ($datas as $key => $data){
+            if(str_starts_with( $key,  "sub-order-product")){
+                $id = explode("sub-order-product-",$key)[1];
+                array_push($sub_orders_products_ids,$id);
+            }
+        }
+
+        if(empty($sub_orders_products_ids)) {
+            return redirect()->back();
         }
 
         $next_table = Table::where('table_no',$datas['table_number'])->first();
@@ -654,15 +769,12 @@ class ProductOrderController extends Controller
 
     public function orderDelete(Request $request)
     {
-
-
         $order = ProductOrder::findOrFail($request->order_id);
         @unlink('assets/front/invoices/product/' . $order->invoice_number);
         foreach ($order->orderitems as $item) {
             $item->delete();
         }
         $is_finished = false;
-
 
         foreach ($order->suborders as $item) {
             if($item->state == 2)
@@ -673,7 +785,35 @@ class ProductOrderController extends Controller
             $item->delete();
         }
 
+        if( $is_finished == false && $order->table_number != null ){
 
+            $table = Table::where( 'table_no',$order->table_number)->first();
+
+            $table->status = 1;
+            $table->save();
+        }
+        $order->delete();
+        Session::flash('success',trans_choice('admin_panel.delete',count($order->orderitems),['Item' => __('Product')]));
+        return back();
+    }
+
+    public function orderDeleteApi($id)
+    {
+        $order = ProductOrder::findOrFail($id);
+        @unlink('assets/front/invoices/product/' . $order->invoice_number);
+        foreach ($order->orderitems as $item) {
+            $item->delete();
+        }
+        $is_finished = false;
+
+        foreach ($order->suborders as $item) {
+            if($item->state == 2)
+                $is_finished = true;
+            foreach($item->products as $product_item){
+                $product_item->delete();
+            }
+            $item->delete();
+        }
 
         if( $is_finished == false && $order->table_number != null ){
 

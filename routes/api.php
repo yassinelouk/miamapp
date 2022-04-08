@@ -46,4 +46,8 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/pos/payment-method/store', 'Admin\PosController@paymentMethodStore');
     Route::post('/pos/payment-method/update', 'Admin\PosController@paymentMethodUpdate');
     Route::post('/pos/payment-method/delete', 'Admin\PosController@paymentMethodDelete');
+    Route::post('/product/order/delete', 'Admin\ProductOrderController@orderDelete');
+    Route::post('/order/change-table', 'Admin\ProductOrderController@updateOrderTable');
+    Route::post('/order/transfert-product', 'Admin\ProductOrderController@transferProducts');
+    Route::post('/pos/placeorder', 'Admin\PosController@placeOrder');
 });
