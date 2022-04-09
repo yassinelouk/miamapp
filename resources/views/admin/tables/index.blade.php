@@ -1,5 +1,14 @@
 @extends('admin.layout')
 
+@section('js')
+  <script>
+    function fillWaiterModal($table_number, $table_id) {
+      $('#tableWaiter').html($table_number);
+      $('#tableId').attr('value', $table_id);
+    }
+  </script>
+@endsection
+
 @section('content')
   <div class="page-header">
     <h4 class="page-title">Tables & QR Builder</h4>
@@ -45,6 +54,9 @@
                         <th scope="col">{{__('Status')}}</th>
                         <th scope="col">{{__('Action')}}</th>
                         <th scope="col">{{__('QR Code')}}</th>
+                        @if (is_null($user->role_id) || $user->role_id == 9)
+                          <th scope="col">{{__('Waiter')}}</th>
+                        @endif
                       </tr>
                     </thead>
                     <tbody>
@@ -53,13 +65,13 @@
                           <td>{{$table->table_no}}</td>
                           <td>
                             @if ($table->status == 0)
-                                <span class="badge badge-danger px-4">{{__('Deactive')}}</span>
+                                <span class="badge badge-danger">{{__('Deactive')}}</span>
                             @elseif ($table->status == 1)
-                                <span class="badge badge-success px-4">{{__('Active')}}</span>
+                                <span class="badge badge-success">{{__('Active')}}</span>
                             @endif
                           </td>
-                          <td class="d-flex align-items-center" >
-                            <a class="btn btn-secondary btn-sm" href="#editModal" data-toggle="modal" data-table_id="{{$table->id}}" data-table_no="{{$table->table_no}}" data-status="{{$table->status}}">
+                          <td>
+                            <a class="btn btn-secondary btn-sm editbtn" href="#editModal" data-toggle="modal" data-table_id="{{$table->id}}" data-table_no="{{$table->table_no}}" data-status="{{$table->status}}">
                               <span class="btn-label">
                                 <i class="fas fa-edit"></i>
                               </span>
@@ -84,6 +96,11 @@
                                 {{__('Generate')}}
                             </a>
                           </td>
+                          <td>
+                            <button class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#assignWaiterModal" onclick="fillWaiterModal({{ $table->table_no }}, {{ $table->id }})">
+                                {{__('Assign')}}
+                            </button>
+                          </td>
                         </tr>
                       @endforeach
                     </tbody>
@@ -94,6 +111,36 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Assign Waiter Modal -->
+  <div class="modal fade" id="assignWaiterModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assigner un serveur à la table n° <span id="tableWaiter"></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" action="{{route('admin.table.assignWaiter')}}">
+                @csrf
+                <input type="number" name="tableId" id="tableId" hidden>
+            <div class="modal-body">
+                    <div class="form-group">
+                        <select name="waiter_id" class="form-control">
+                            @foreach($waiters as $waiter)
+                              <option value="{{ $waiter->id }}">{{ $waiter->first_name }} {{ $waiter->last_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Valider</button>
+            </div>
+            </form>
+        </div>
     </div>
   </div>
 

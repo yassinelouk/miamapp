@@ -39,8 +39,8 @@ class FrontendController extends Controller
     {
         $bs = BS::first();
         $be = BE::first();
-        
-   
+
+
         Config::set('captcha.sitekey', $bs->google_recaptcha_site_key);
         Config::set('captcha.secret', $bs->google_recaptcha_secret_key);
         Config::set('mail.host', $be->smtp_host);
@@ -69,7 +69,7 @@ class FrontendController extends Controller
         $data['testimonials'] = Testimonial::where('language_id', $lang_id)->orderBy('serial_number', 'ASC')->get();
         $data['blogs'] = Blog::where('language_id', $lang_id)->orderBy('id', 'desc')->take(2)->get();
         $data['special_product'] = Product::where('language_id', $lang_id)->where('status', 1)->where('is_special', 1)->orderBy('id', 'desc')->get();
-        $data['categories'] = Pcategory::where('status', 1)->where('is_feature', 1)->where('language_id', $currentLang->id)->get();
+        $data['categories'] = Pcategory::where('status', 1)->where('is_feature', 1)->where('language_id', $currentLang->id)->orderBy('position')->get();
 
         $data['products'] = Product::where('language_id', $lang_id)->where('status', 1)->paginate(10);
 
@@ -472,7 +472,7 @@ class FrontendController extends Controller
                     },
                 ],
             ];
-        
+
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
             $errmsgs = $validator->getMessageBag()->add('error', 'true');
