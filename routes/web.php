@@ -279,6 +279,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:admin', 'checkstatus',
         // Admin Logo Routes
         Route::get('/logo', 'Admin\BasicController@logo')->name('admin.logo');
         Route::post('/logo/post', 'Admin\BasicController@updatelogo')->name('admin.logo.update');
+        Route::post('/logo/qr/post', 'Admin\BasicController@updateQRlogo')->name('admin.qrlogo.update');
 
 
         // Admin Preloader Routes

@@ -82,6 +82,9 @@ $selLang = \App\Models\Language::where('code', request()->input('language'))->fi
                         <label for="image"><strong>{{__('Logo')}}</strong></label>
                       </div>
                       <div class="showImage mb-3">
+                        @if (!empty($abs->footer_logo))
+                          <a class="remove-image" data-type="top"><i class="far fa-times-circle"></i></a>
+                        @endif
                         <img src="{{ !empty($abs->footer_logo) ? asset('assets/front/img/' . $abs->footer_logo) :  asset('assets/admin/img/noimage.jpg')}}" alt="..." class="img-thumbnail">
                       </div>
                       <input type="file" name="file" id="image" class="form-control image">

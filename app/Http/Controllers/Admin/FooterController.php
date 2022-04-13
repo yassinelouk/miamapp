@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\BasicSetting as BS;
 use App\Models\BasicExtended;
+use App\Models\BasicSetting;
 use App\Models\Language;
 use Validator;
 use Session;
@@ -94,12 +95,17 @@ class FooterController extends Controller
         $type = $request->type;
         $langid = $request->language_id;
 
-        $be = BasicExtended::where('language_id', $langid)->firstOrFail();
-
         if ($type == "bottom") {
+            $be = BasicExtended::where('language_id', $langid)->firstOrFail();
             @unlink("assets/front/img/" . $be->footer_bottom_img);
             $be->footer_bottom_img = NULL;
             $be->save();
+        }
+        else if ($type == "top") {
+            $bs = BasicSetting::where('language_id', $langid)->firstOrFail();
+            @unlink("assets/front/img/" . $bs->footer_logo);
+            $bs->footer_logo = NULL;
+            $bs->save();
         }
 
         $request->session()->flash('success', 'Image removed successfully!');

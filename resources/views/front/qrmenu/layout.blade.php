@@ -79,9 +79,12 @@
 
                 <div class="col-3">
 
-                    <div class="logo-wrapper">
-                        <a href="{{route('front.qrmenu')}}"><img src="{{asset('assets/front/img/'.$bs->logo)}}" alt="Logo"></a>
-                    </div>
+                    @if(!empty($bs->qr_menu_logo))
+                        <div class="logo-wrapper">
+                            <a href="{{route('front.qrmenu')}}"><img src="{{asset('assets/front/img/'.$bs->qr_menu_logo)}}" alt="Logo"></a>
+                        </div>
+                    @endif
+
                 </div>
 
                 <div class="col-9 d-flex justify-content-end">

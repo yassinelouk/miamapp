@@ -39,6 +39,9 @@ class PosController extends Controller
         $data['tables'] = Table::get();
         $data['scharges'] = $lang->shippings;
         $data['postcodes'] = PostalCode::where('language_id', $lang->id)->orderBy('serial_number', 'ASC')->get();
+        foreach ($pcats as $prod ) {
+            $data['products'] = $prod['products'];
+        }
 
         $data['pcats'] = $pcats;
         $data['cart'] = Session::get('pos_cart');
@@ -401,7 +404,12 @@ class PosController extends Controller
             $po->currency_symbol = $be->base_currency_symbol;
             $po->currency_symbol_position = $be->base_currency_symbol_position;
             $po->tax = posTax();
-            $po->total = posCartSubTotal() + posTax() + posShipping();
+            $po->total = 0;
+            if(!empty($request->total)){
+                $po->total = $request->total;
+            } else {
+                $po->total = posCartSubTotal() + posTax() + posShipping();
+            }
             $po->type = 'pos';
             $po->save();
             $order = $po;
@@ -430,7 +438,12 @@ class PosController extends Controller
 
 
         // save cart items
-        $this->saveOrderItems($order,0);
+        if(!empty($request->pos_cart)) {
+            $this->saveOrderItemsApi($order,0,$request->pos_cart);
+        } else {
+            $this->saveOrderItems($order,0);
+        }
+
 
         // clear cart
         Session::forget('pos_cart');
@@ -448,6 +461,85 @@ class PosController extends Controller
 
     public function saveOrderItems($order,$state) {
         $cart = Session::get('pos_cart');
+
+        $sub_order_drink = SubOrder::firstOrCreate(
+            ['product_orders_id' =>  $order->id , 'type' => 0 ,'state' => $state],
+            []
+        );
+
+        $sub_order_dish = SubOrder::firstOrCreate(
+            ['product_orders_id' =>  $order->id , 'type' => 1 ,'state' => $state],
+            []
+        );
+
+        if(!empty($cart)) {
+            foreach ($cart as $key => $cartItem) {
+
+                $addonTotal = 0.00;
+                if (!empty($cartItem["addons"])) {
+                    foreach ($cartItem["addons"] as $key => $addon) {
+                        $addonTotal += (float)$addon["price"];
+                    }
+                    $addonTotal = $addonTotal * (int)$cartItem["qty"];
+                }
+                $vprice = !empty($cartItem["variations"]) ? (float)$cartItem["variations"]["price"] * (int)$cartItem["qty"] : 0.00;
+                $pprice = (float)$cartItem["product_price"] * (int)$cartItem["qty"];
+
+
+                $orderitem = OrderItem::where('product_order_id',$order->id)->where('product_id',$cartItem["id"])
+                                        ->where('notes',$cartItem["notes"])
+                                        ->where('addons',json_encode($cartItem["addons"]))
+                                        ->where('variations',json_encode($cartItem["variations"]))
+                                        ->first();
+                if($orderitem == null){
+                    $orderitem = new OrderItem();
+                    $orderitem->product_order_id  =  $order->id;
+                    $orderitem->product_id  =  $cartItem["id"];
+                    $orderitem->user_id  = Auth::check() ? Auth::user()->id : NULL;
+                    $orderitem->title  = $cartItem["name"];
+                    $orderitem->variations  =  json_encode($cartItem["variations"]);
+                    $orderitem->addons  =  json_encode($cartItem["addons"]);
+                    $orderitem->notes  = $cartItem["notes"];
+                    $orderitem->variations_price  = $vprice;
+                    $orderitem->addons_price = $addonTotal;
+                    $orderitem->product_price  =  $pprice;
+                    $orderitem->total  =  $pprice + $vprice + $addonTotal;
+                    $orderitem->qty  =  $cartItem["qty"];  // updating global quantity
+                    $orderitem->image  =  $cartItem["photo"];
+                    $orderitem->created_at =  Carbon::now();
+                    $orderitem->save();
+
+                }else{
+                    $orderitem->qty = $orderitem->qty +  $cartItem["qty"];
+                    $orderitem->total = $orderitem->total +  $cartItem["qty"]*$orderitem->product_price;
+                    $orderitem->save();
+                }
+
+
+
+                $category = Product::find($cartItem["id"])->category;
+
+
+                if($category->type == 0){
+                    // drink
+                    $sub_order_product = SubOrdersProducts::firstOrCreate(
+                        ['orders_item_id' => $orderitem->id,'sub_order_id' => $sub_order_drink->id]
+                    );
+                }
+                else{
+                    $sub_order_product =  SubOrdersProducts::firstOrCreate(
+                        ['orders_item_id' => $orderitem->id,'sub_order_id' => $sub_order_dish->id]
+                    );
+                }
+
+                $sub_order_product->quantity = $sub_order_product->quantity + $cartItem["qty"];  // updating local quantity of each sub order
+                $sub_order_product->save();
+            }
+        }
+    }
+
+    public function saveOrderItemsApi($order,$state,$cart) {
+        $cart = $cart;
 
         $sub_order_drink = SubOrder::firstOrCreate(
             ['product_orders_id' =>  $order->id , 'type' => 0 ,'state' => $state],

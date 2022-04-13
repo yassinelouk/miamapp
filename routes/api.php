@@ -50,4 +50,5 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/order/change-table', 'Admin\ProductOrderController@updateOrderTable');
     Route::post('/order/transfert-product', 'Admin\ProductOrderController@transferProducts');
     Route::post('/pos/placeorder', 'Admin\PosController@placeOrder');
+    Route::get('/dashboardApi', 'Admin\DashboardController@dashboardApi');
 });

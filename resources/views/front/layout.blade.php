@@ -311,9 +311,12 @@
                     </div>
                     <div class="col-lg-6 order-3 order-lg-2">
                         <div class="footer-widget-2 text-left text-sm-center" >
+                            @if(!empty($bs->footer_logo))
                             <a href="{{route('front.index')}}">
-                            <img src="{{asset('assets/front/img/' . $bs->footer_logo)}}" alt="logo" >
-                            </a>
+                                <img src="{{asset('assets/front/img/' . $bs->footer_logo)}}" alt="logo" >
+                                </a>
+                            @endif
+
                             <ul class="pt-25">
                                 @php
                                     $blinks = App\Models\Bottomlink::where('language_id',$currentLang->id)->orderby('id','desc')->get();

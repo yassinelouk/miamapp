@@ -48,7 +48,32 @@
                     </div>
                   </div>
                 </div>
-
+                <div class="card-footer">
+                  <div class="form">
+                    <div class="form-group from-show-notify row">
+                      <div class="col-12 text-center">
+                        <button type="submit" class="btn btn-success">{{__('Update')}}</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+              <form  enctype="multipart/form-data" action="{{route('admin.qrlogo.update')}}" method="POST">
+                @csrf
+                <div class="row">
+                  <div class="col-lg-12">
+                    <div class="form-group">
+                      <div class="col-12 mb-2">
+                        <label for="qr-logo"><strong> {{__('Qr Menu Logo')}} **</strong></label>
+                      </div>
+                      <div class="col-md-12 showImage mb-3">
+                        <img id="qrlogo-display" src="{{$bs->qr_menu_logo ? asset('assets/front/img/'.$bs->qr_menu_logo) :  asset('assets/admin/img/noimage.jpg')}}" alt="..." class="img-thumbnail">
+                      </div>
+                      <input type="file" name="file" id="qr-logo" class="form-control" onchange="showImg(this)">
+                      <p id="errfile" class="mb-0 text-danger em"></p>
+                    </div>
+                  </div>
+                </div>
                 <div class="card-footer">
                   <div class="form">
                     <div class="form-group from-show-notify row">
@@ -66,4 +91,12 @@
     </div>
   </div>
 
+@endsection
+
+@section('js')
+    <script>
+      function showImg(target) {
+        document.getElementById("qrlogo-display").src = window.URL.createObjectURL(target.files[0]);
+      }
+    </script>
 @endsection

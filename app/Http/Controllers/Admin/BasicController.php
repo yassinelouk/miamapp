@@ -107,6 +107,47 @@ class BasicController extends Controller
         return back();
     }
 
+    public function updateQRlogo(Request $request)
+    {
+        $img = $request->file('file');
+        $allowedExts = array('jpg', 'png', 'jpeg');
+
+        $rules = [
+            'file' => [
+                function ($attribute, $value, $fail) use ($img, $allowedExts) {
+                    if (!empty($img)) {
+                        $ext = $img->getClientOriginalExtension();
+                        if (!in_array($ext, $allowedExts)) {
+                            return $fail("Only png, jpg, jpeg image is allowed");
+                        }
+                    }
+                },
+            ],
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            $validator->getMessageBag()->add('error', 'true');
+            return response()->json(['errors' => $validator->errors(), 'id' => 'logo']);
+        }
+
+        if ($request->hasFile('file')) {
+            $bss = BasicSetting::all();
+
+            $filename = uniqid() . '.' . $img->getClientOriginalExtension();
+            $img->move('assets/front/img/', $filename);
+
+            foreach ($bss as $key => $bs) {
+                // only remove the the previous image, if it is not the same as default image or the first image is being updated
+                @unlink('assets/front/img/' . $bs->qr_menu_logo);
+                $bs->qr_menu_logo = $filename;
+                $bs->save();
+            }
+        }
+        Session::flash('success', 'QR Menu Logo update successfully.');
+        return back();
+    }
+
     public function preloader(Request $request)
     {
         return view('admin.basic.preloader');
