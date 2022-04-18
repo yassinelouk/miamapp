@@ -323,6 +323,7 @@ class PosController extends Controller
     }
 
     public function placeOrder(Request $request) {
+
         if (empty(Session::get('pos_cart'))) {
             return back()->with('warning', 'Le panier est vide!');
         }
@@ -343,9 +344,7 @@ class PosController extends Controller
 
         $be = BasicExtended::first();
         $bs = BasicSetting::first();
-
         $table = Table::where('table_no', $request->table_no )->first();
-
         if ($table->status == 1) {
             // store in `product_orders`
             $po = new ProductOrder;
@@ -357,6 +356,7 @@ class PosController extends Controller
             $po->serving_method = $request->serving_method;
             $po->method = $request->payment_method;
             $po->payment_status = $request->payment_status;
+
 
             if ($request->serving_method == 'on_table') {
                 $po->token_no = $bs->token_no + 1;
@@ -413,7 +413,7 @@ class PosController extends Controller
             $po->type = 'pos';
             $po->save();
             $order = $po;
-            // table is now occuped
+            // table is now occupied
             $table->status = 0;
             $table->save();
 
@@ -423,7 +423,6 @@ class PosController extends Controller
         }
 
         $orderId = $order->id;
-
         // store in `customers`
         $customer = Customer::where('phone', $request->customer_phone);
 
@@ -437,13 +436,10 @@ class PosController extends Controller
         $customer->save();
 
 
-        // save cart items
-        if(!empty($request->pos_cart)) {
-            $this->saveOrderItemsApi($order,0,$request->pos_cart);
-        } else {
-            $this->saveOrderItems($order,0);
-        }
 
+        // // save cart items
+
+        $this->saveOrderItems($order,0);
 
         // clear cart
         Session::forget('pos_cart');
@@ -452,7 +448,6 @@ class PosController extends Controller
 
         // fire sound notification
         event(new OrderPlaced($order));
-
         // redirect back
         Session::flash('previous_serving_method', $request->serving_method);
         Session::flash('success', 'Commande passée avec succès');
@@ -484,7 +479,6 @@ class PosController extends Controller
                 }
                 $vprice = !empty($cartItem["variations"]) ? (float)$cartItem["variations"]["price"] * (int)$cartItem["qty"] : 0.00;
                 $pprice = (float)$cartItem["product_price"] * (int)$cartItem["qty"];
-
 
                 $orderitem = OrderItem::where('product_order_id',$order->id)->where('product_id',$cartItem["id"])
                                         ->where('notes',$cartItem["notes"])
@@ -538,6 +532,120 @@ class PosController extends Controller
         }
     }
 
+    public function placeOrderApi(Request $request) {
+
+        $be = BasicExtended::first();
+        $bs = BasicSetting::first();
+        $table = Table::where('table_no', $request->table_no )->first();
+        if ($table->status == 1) {
+            // store in `product_orders`
+            $po = new ProductOrder;
+            $order_number = time() . "";
+            $order_number = substr($order_number , 4);
+            $po->order_number = $order_number;
+            $po->billing_fname = $request->customer_name;
+            $po->billing_number = $request->customer_phone;
+            $po->serving_method = $request->serving_method;
+            $po->method = $request->payment_method;
+            $po->payment_status = $request->payment_status;
+
+
+            if ($request->serving_method == 'on_table') {
+                $po->token_no = $bs->token_no + 1;
+                $bs->token_no = $po->token_no;
+                $bs->save();
+
+                Session::put('pos_token_no', $po->token_no);
+
+                $po->table_number = $request->table_no;
+            }
+            elseif ($request->serving_method == 'pick_up') {
+                $po->pick_up_date = $request->pick_up_date;
+                $po->pick_up_time = $request->pick_up_time;
+            }
+            elseif ($request->serving_method == 'home_delivery') {
+                $po->delivery_date = $request->delivery_date;
+                if ($be->delivery_date_time_status == 1) {
+                    if ($request->has('delivery_time') && $request->filled('delivery_time')) {
+                        $po->delivery_time_start = $tf->start;
+                        $po->delivery_time_end = $tf->end;
+                    }
+                }
+
+                if ($bs->postal_code == 0) {
+                    if ($request->has('shipping_charge')) {
+                        $shipping = ShippingCharge::findOrFail($request->shipping_charge);
+                        $po->shipping_method = $shipping->title;
+                        $po->shipping_charge = posShipping();
+                    }
+                } else {
+                    $postalCode = PostalCode::findOrFail($request->postal_code);
+                    $po->shipping_charge = posShipping();
+
+                    $title = '';
+                    if (!empty($postalCode->title)) {
+                        $title = $postalCode->title . ' - ';
+                    }
+                    $po->postal_code = $title . $postalCode->postcode;
+                    $po->postal_code_status = 1;
+                }
+            }
+
+            $po->currency_code = $be->base_currency_text;
+            $po->currency_code_position = $be->base_currency_text_position;
+            $po->currency_symbol = $be->base_currency_symbol;
+            $po->currency_symbol_position = $be->base_currency_symbol_position;
+            $po->tax = posTax();
+            $po->total = 0;
+            if(!empty($request->total)){
+                $po->total = $request->total;
+            } else {
+                $po->total = posCartSubTotal() + posTax() + posShipping();
+            }
+            $po->type = 'pos';
+            $po->save();
+            $order = $po;
+            // table is now occupied
+            $table->status = 0;
+            $table->save();
+
+        }
+        else {
+            $order = ProductOrder::where('table_number',$request->table_no)->where('completed','no')->orderBy('id','desc')->first();
+        }
+
+        $orderId = $order->id;
+        // store in `customers`
+        $customer = Customer::where('phone', $request->customer_phone);
+
+        if ($customer->count() == 0) {
+            $customer = new Customer;
+        } else {
+            $customer = $customer->first();
+        }
+        $customer->name = $request->customer_name;
+        $customer->phone = $request->customer_phone;
+        $customer->save();
+
+
+
+        // // save cart items
+
+        $this->saveOrderItemsApi($order,0,$request->pos_cart);
+        // return response()->json($this->saveOrderItemsApi($order,0,$request->pos_cart));exit;
+        // clear cart
+        Session::forget('pos_cart');
+        Session::forget('pos_shipping_charge');
+        Session::forget('pos_serving_method');
+
+        // fire sound notification
+        event(new OrderPlaced($order));
+        // redirect back
+        Session::flash('previous_serving_method', $request->serving_method);
+        Session::flash('success', 'Commande passée avec succès');
+        return back();
+    }
+
     public function saveOrderItemsApi($order,$state,$cart) {
         $cart = $cart;
 
@@ -550,53 +658,53 @@ class PosController extends Controller
             ['product_orders_id' =>  $order->id , 'type' => 1 ,'state' => $state],
             []
         );
-
-        if(!empty($cart)) {
-            foreach ($cart as $key => $cartItem) {
-
+        $cart_pos[]= json_decode($cart);
+        if(!empty($cart_pos)) {
+            foreach ($cart_pos[0] as $key => $cartItem) {
+                // return response()->json($cartItem);
                 $addonTotal = 0.00;
-                if (!empty($cartItem["addons"])) {
-                    foreach ($cartItem["addons"] as $key => $addon) {
-                        $addonTotal += (float)$addon["price"];
+                if (!empty($cartItem->addons)) {
+                    foreach ($cartItem->addons as $key => $addon) {
+                        $addonTotal += (float)$addon->price;
                     }
-                    $addonTotal = $addonTotal * (int)$cartItem["qty"];
+                    $addonTotal = $addonTotal * (int)$cartItem->qty;
                 }
-                $vprice = !empty($cartItem["variations"]) ? (float)$cartItem["variations"]["price"] * (int)$cartItem["qty"] : 0.00;
-                $pprice = (float)$cartItem["product_price"] * (int)$cartItem["qty"];
+                // $vprice = !empty($cartItem->variations) ? (float)$cartItem["variations"]["price"] * (int)$cartItem["qty"] : 0.00;
+                $pprice = (float)$cartItem->product_price * (int)$cartItem->qty;
 
 
-                $orderitem = OrderItem::where('product_order_id',$order->id)->where('product_id',$cartItem["id"])
-                                        ->where('notes',$cartItem["notes"])
-                                        ->where('addons',json_encode($cartItem["addons"]))
-                                        ->where('variations',json_encode($cartItem["variations"]))
+                $orderitem = OrderItem::where('product_order_id',$order->id)->where('product_id',$cartItem->id)
+                                        ->where('notes',$cartItem->notes)
+                                        ->where('addons',json_encode($cartItem->addons))
+                                        ->where('variations',json_encode($cartItem->variations))
                                         ->first();
                 if($orderitem == null){
                     $orderitem = new OrderItem();
                     $orderitem->product_order_id  =  $order->id;
-                    $orderitem->product_id  =  $cartItem["id"];
+                    $orderitem->product_id  =  $cartItem->id;
                     $orderitem->user_id  = Auth::check() ? Auth::user()->id : NULL;
-                    $orderitem->title  = $cartItem["name"];
-                    $orderitem->variations  =  json_encode($cartItem["variations"]);
-                    $orderitem->addons  =  json_encode($cartItem["addons"]);
-                    $orderitem->notes  = $cartItem["notes"];
-                    $orderitem->variations_price  = $vprice;
-                    $orderitem->addons_price = $addonTotal;
+                    $orderitem->title  = $cartItem->name;
+                    $orderitem->variations  =  json_encode($cartItem->variations);
+                    // $orderitem->addons  =  json_encode($cartItem["addons"]);
+                    // $orderitem->notes  = $cartItem["notes"];
+                    // $orderitem->variations_price  = $vprice;
+                    $orderitem->addons_price = 0;
                     $orderitem->product_price  =  $pprice;
-                    $orderitem->total  =  $pprice + $vprice + $addonTotal;
-                    $orderitem->qty  =  $cartItem["qty"];  // updating global quantity
-                    $orderitem->image  =  $cartItem["photo"];
+                    $orderitem->total  =  $pprice + $addonTotal;
+                    $orderitem->qty  =  $cartItem->qty;  // updating global quantity
+                    $orderitem->image  =  $cartItem->photo;
                     $orderitem->created_at =  Carbon::now();
                     $orderitem->save();
 
                 }else{
-                    $orderitem->qty = $orderitem->qty +  $cartItem["qty"];
-                    $orderitem->total = $orderitem->total +  $cartItem["qty"]*$orderitem->product_price;
+                    $orderitem->qty = $orderitem->qty +  $cartItem->qty; ;
+                    $orderitem->total = $orderitem->total +  $cartItem->qty*$orderitem->product_price;
                     $orderitem->save();
                 }
 
 
 
-                $category = Product::find($cartItem["id"])->category;
+                $category = Product::find($cartItem->id)->category;
 
 
                 if($category->type == 0){
@@ -611,7 +719,7 @@ class PosController extends Controller
                     );
                 }
 
-                $sub_order_product->quantity = $sub_order_product->quantity + $cartItem["qty"];  // updating local quantity of each sub order
+                $sub_order_product->quantity = $sub_order_product->quantity + $cartItem->qty;  // updating local quantity of each sub order
                 $sub_order_product->save();
             }
         }

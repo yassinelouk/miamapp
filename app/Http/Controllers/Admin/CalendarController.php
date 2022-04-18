@@ -27,7 +27,8 @@ class CalendarController extends Controller
         $events_json = array();
         foreach ($events as $event) {
             array_push($events_json, array(
-                'title' => $event->event_name,
+                'id' => [$event->id . '|;|' .  $event->id_admin],
+                'title' => $event->employee->first_name . ' ' . $event->employee->last_name,
                 'start' => $event->starting_date,
                 'end' => $event->ending_date,
             ));
@@ -42,7 +43,8 @@ class CalendarController extends Controller
         $events_json = array();
         foreach ($events as $event) {
             array_push($events_json, array(
-                'title' => $event->event_name,
+                'id' => [$event->id . '|;|' .  $event->id_admin],
+                'title' => $event->employee->first_name . ' ' . $event->employee->last_name,
                 'start' => $event->starting_date,
                 'end' => $event->ending_date,
             ));
@@ -68,21 +70,22 @@ class CalendarController extends Controller
      */
     public function store(Request $req)
     {
+        // dd($req->all());
         $validate = $req->validate([
-            'event_name' => 'required',
             'starting_date' => 'required',
             'ending_date' => 'required',
             'admins' => 'required',
         ]);
 
-        $calendar=new Calendar();
-        $calendar->event_name=$req->input('event_name');
-        $calendar->starting_date=$req->input('starting_date');
-        $calendar->ending_date=$req->input('ending_date');
-        $calendar->id_admin=$req->input('admins');
+        foreach ($req->days as $day) {
+            $calendar=new Calendar();
+            $calendar->starting_date= $day . ' ' . $req->input('starting_date') ;
+            $calendar->ending_date= $day . ' ' . $req->input('ending_date');
+            $calendar->id_admin=$req->input('admins');
+            $calendar->save();
+        }
 
-        $calendar->save();
-         return redirect()->route('admin.calendar.calendar');
+        return redirect()->route('admin.calendar.calendar');
     }
 
     /**
@@ -123,9 +126,15 @@ class CalendarController extends Controller
      * @param  \App\Calendar  $calendar
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Calendar $calendar)
+    public function update(Request $request)
     {
-        //
+       $event = Calendar::find($request->event_id);
+        $event->starting_date= $request->day . ' ' . $request->input('starting_date') ;
+        $event->ending_date= $request->day . ' ' . $request->input('ending_date');
+        $event->id_admin=$request->input('admins');
+        $event->save();
+
+        return redirect()->route('admin.calendar.calendar');
     }
 
     /**
@@ -134,8 +143,11 @@ class CalendarController extends Controller
      * @param  \App\Calendar  $calendar
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Calendar $calendar)
+    public function destroy(Request $request)
     {
-        //
+        $event = Calendar::find($request->event_id);
+        $event->delete();
+
+        return redirect()->route('admin.calendar.calendar');
     }
 }

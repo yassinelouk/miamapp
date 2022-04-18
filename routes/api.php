@@ -49,6 +49,6 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/product/order/delete', 'Admin\ProductOrderController@orderDelete');
     Route::post('/order/change-table', 'Admin\ProductOrderController@updateOrderTable');
     Route::post('/order/transfert-product', 'Admin\ProductOrderController@transferProducts');
-    Route::post('/pos/placeorder', 'Admin\PosController@placeOrder');
+    Route::post('/pos/placeOrderApi', 'Admin\PosController@placeOrderApi');
     Route::get('/dashboardApi', 'Admin\DashboardController@dashboardApi');
 });

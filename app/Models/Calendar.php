@@ -13,7 +13,7 @@ class Calendar extends Model
       "id_admin",
      ];
 
-    public function employees() {
-      return $this->hasOne('App\Models\Admin');
+    public function employee() {
+        return $this->hasOne('App\Models\Admin', 'id', 'id_admin');
     }
 }
