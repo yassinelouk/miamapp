@@ -31,6 +31,8 @@ class CalendarController extends Controller
                 'title' => $event->employee->first_name . ' ' . $event->employee->last_name,
                 'start' => $event->starting_date,
                 'end' => $event->ending_date,
+                'backgroundColor' => $event->background_color,
+                'borderColor' => $event->background_color
             ));
         }
         return view('admin.calendar.calendar',compact('admins','events_json'));
@@ -75,6 +77,7 @@ class CalendarController extends Controller
             'starting_date' => 'required',
             'ending_date' => 'required',
             'admins' => 'required',
+            'background_color' => 'required'
         ]);
 
         foreach ($req->days as $day) {
@@ -82,6 +85,7 @@ class CalendarController extends Controller
             $calendar->starting_date= $day . ' ' . $req->input('starting_date') ;
             $calendar->ending_date= $day . ' ' . $req->input('ending_date');
             $calendar->id_admin=$req->input('admins');
+            $calendar->background_color = $req->input('background_color');
             $calendar->save();
         }
 
@@ -128,10 +132,11 @@ class CalendarController extends Controller
      */
     public function update(Request $request)
     {
-       $event = Calendar::find($request->event_id);
+        $event = Calendar::find($request->event_id);
         $event->starting_date= $request->day . ' ' . $request->input('starting_date') ;
         $event->ending_date= $request->day . ' ' . $request->input('ending_date');
         $event->id_admin=$request->input('admins');
+        $event->background_color = $request->input('background_color');
         $event->save();
 
         return redirect()->route('admin.calendar.calendar');

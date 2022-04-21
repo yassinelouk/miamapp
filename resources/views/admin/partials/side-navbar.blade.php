@@ -782,6 +782,9 @@
                   <a href="{{route('admin.calendar.calendar')}}">
                     <span class="sub-item">{{__('Calendar')}}</span>
                   </a>
+                  <a href="{{route('admin.indexScript')}}">
+                    <span class="sub-item">{{__('Import script')}}</span>
+                  </a>
                 </li>
               </ul>
             </div>

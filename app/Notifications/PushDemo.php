@@ -74,4 +74,8 @@ class PushDemo extends Notification
             //
         ];
     }
+    public function push(){
+        Notification::send(User::all(),new PushDemo);
+        return redirect()->back();
+    }
 }

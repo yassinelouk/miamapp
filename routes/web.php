@@ -1,4 +1,5 @@
 <?php
+
 Route::get('showcart', function() {
     return \Session::get('pos_cart');
 });
@@ -859,4 +860,12 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:admin', 'checkstatus',
     //Calendar Routes
     Route::get('/Calendar', 'Admin\CalendarController@index')->name('admin.calendar.calendar');
     Route::post('/Calendar', 'Admin\CalendarController@store')->name('calendar.store');
+    Route::post('/Calendar/update', 'Admin\CalendarController@update')->name('calendar.update');
+    Route::post('/Calendar/delete', 'Admin\CalendarController@destroy')->name('calendar.delete');
+    Route::get('/ImportScript', 'Admin\ScriptController@index')->name('admin.indexScript');
+    Route::get('/ImportScriptShow', 'Admin\ScriptController@show')->name('admin.indexScriptshow');
+    Route::post('/ImportScriptStore', 'Admin\ScriptController@store')->name('admin.indexScriptStore');
+    Route::get('/push','PushController@push')->name('push');
+
+
 });

@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Session;
 use Validator;
 use Str;
 use PDF;
+use Illuminate\Notifications\Notification;
 
 
 class PosController extends Controller
@@ -448,6 +449,7 @@ class PosController extends Controller
 
         // fire sound notification
         event(new OrderPlaced($order));
+
         // redirect back
         Session::flash('previous_serving_method', $request->serving_method);
         Session::flash('success', 'Commande passée avec succès');

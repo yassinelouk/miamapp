@@ -61,7 +61,10 @@
                             <div class="col-md-12 showImage mb-3">
                               <img src="{{asset('assets/admin/img/noimage.jpg')}}" alt="..." class="img-thumbnail">
                             </div>
-                            <input type="file" name="feature_image" id="image" class="form-control image">
+                            <div class="d-flex">
+                              <input type="file" name="feature_image" id="image" class="form-control image col-9">
+                              <button class="btn btn-primary col-3 d-inline-block" data-toggle="modal" data-target="#gallery">{{__('Choose from gallery')}}</button>
+                            </div>
                             <p id="errfeature_image" class="mb-0 text-danger em"></p>
                           </div>
                         </div>
@@ -238,6 +241,29 @@
                </div>
             </div>
          </div>
+         <div class="modal fade" id="gallery" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLongTitle">{{__('Choose an image')}}</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                {{-- <div class="modal-body">
+                    @foreach ($allMedia ?? '' as $media)
+                        <img src="{{ asset('images/' .$media .'') }}" width="100" height="100" style="object-fit: contain; margin: 10px;" onclick="selectElement(this)">
+                    @endforeach
+                </div> --}}
+                <div class="modal-footer" style="justify-content: space-between;">
+                  <div>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{__('Close')}}</button>
+                    <button type="submit" class="btn btn-primary">{{__('Save')}}</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
       </div>
    </div>
 </div>
@@ -251,6 +277,18 @@
 </script>
 @endsection
 
+@section('js')
+   <script>
+      function selectElement(img) {
+         if ($(img).css('outline') == 'rgb(53, 128, 234) solid 3px') {
+            $(img).css('outline', '0');
+         }
+         else {
+            $(img).css('outline', 'rgb(53, 128, 234) solid 3px');
+         }
+      }
+   </script>
+@endsection
 
 @section('vuescripts')
     <script>

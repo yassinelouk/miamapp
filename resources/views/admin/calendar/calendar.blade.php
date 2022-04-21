@@ -55,6 +55,10 @@
                     <p id="errtable_no" class="mb-0 text-danger em"></p>
                   </div>
                 </div>
+                <div class="form-group" >
+                    <label for="">{{__('Event color')}} *</label>
+                    <input class="d-block" type="color" id="colorpicker" name="background_color" value="#242424">
+                </div>
                 <div class="form-group">
                     <label for="">{{__('Employees')}} *</label>
                     <select id="employeesList" name="admins" class="form-control" required>
@@ -104,6 +108,10 @@
                     <input id="endingTimeInput-update" type="time" class="form-control" required name="ending_date" value="">
                     <p id="errtable_no" class="mb-0 text-danger em"></p>
                   </div>
+                </div>
+                <div class="form-group" >
+                  <label for="">{{__('Event color')}} *</label>
+                  <input class="d-block" type="color" id="colorpicker-update" name="background_color" value="#242424">
                 </div>
                 <div class="form-group">
                     <label for="">{{__('Employees')}} *</label>
@@ -188,6 +196,7 @@
             $('#exampleModalLongTitle').text('Ajouter un évènement du ' + (info.start).toLocaleDateString("fr") + ' au ' + tomorrow.toLocaleDateString("fr"));
             $('#startingTimeInput').val('09:00');
             $('#endingTimeInput').val('');
+            $('#colorpicker').val('#242424');
             $('#employeesList').prop('selectedIndex', 0);
             $('#newEventBtn').trigger('click');
           }
@@ -198,6 +207,7 @@
             $('#exampleModalLongTitle').text('Ajouter un évènement pour le ' + (info.start).toLocaleDateString("fr"));
             $('#startingTimeInput').val('09:00');
             $('#endingTimeInput').val('');
+            $('#colorpicker').val('#242424');
             $('#employeesList').prop('selectedIndex', 0);
             $('#newEventBtn').trigger('click');
           }
@@ -209,6 +219,7 @@
           $('#eventDay-update').val(formatDate(info.event.start));
           $('#startingTimeInput-update').val(getDateHour(info.event.start));
           $('#endingTimeInput-update').val(getDateHour(info.event.end));
+          $('#colorpicker-update').val(info.event.backgroundColor);
           $('#employeesList-update option[value="' + infos[1] + '"]').prop('selected', true).trigger("change");
           $('#editEventBtn').trigger('click');
         },
