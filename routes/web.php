@@ -865,7 +865,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:admin', 'checkstatus',
     Route::get('/ImportScript', 'Admin\ScriptController@index')->name('admin.indexScript');
     Route::get('/ImportScriptShow', 'Admin\ScriptController@show')->name('admin.indexScriptshow');
     Route::post('/ImportScriptStore', 'Admin\ScriptController@store')->name('admin.indexScriptStore');
-    Route::get('/push','PushController@push')->name('push');
+    Route::get('/ImportScriptExcel', 'Admin\ScriptController@excelScript')->name('admin.excelScript');
 
 
 });

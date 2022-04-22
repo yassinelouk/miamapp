@@ -99,9 +99,37 @@ class ScriptController extends Controller
      * @param  \App\script  $script
      * @return \Illuminate\Http\Response
      */
-    public function edit(script $script)
+    public function excelScript(script $script)
     {
-        //
+        $products = fopen("csv_files/product.csv","r");
+        $data = fgetcsv($products, 1000, ",");
+        while (($data = fgetcsv($products, 1000, ";")) !== FALSE) {
+            $prod = new Product();
+            $prod->language_id = $data[1];
+            $prod->title = "$data[2]";
+            $prod->slug = "$data[3]";
+            $prod->category_id = $data[4];
+            $prod->feature_image = "$data[5]";
+            $prod->summary = "$data[6]";
+            $prod->description = "$data[7]";
+            $prod->variations = "$data[8]";
+            $prod->addons = "$data[9]";
+            $prod->current_price = $data[10];
+            $prod->previous_price = $data[11];
+            $prod->rating = $data[12];
+            $prod->status = $data[13];
+            $prod->is_feature = $data[14];
+            $prod->is_special = $data[17];
+            $prod->fidelity_score = $data[18];
+            if($prod->save()) {
+                Session::flash('success', 'Products imported successfully!');
+            } else {
+                echo 'erreur';
+            }
+        }
+
+        return back();
+        Session::flash('success', 'Products imported successfully!');
     }
 
     /**

@@ -21,7 +21,11 @@
         <span class="btn btn-info btn-sm editbtn">{{__('Executer le Cron')}}</span>
     </a>
 
-    <form  class="" action="{{ route('admin.indexScriptStore') }}" method="POST" enctype="multipart/form-data">
+    <a href="{{route('admin.excelScript')}}">
+        <span class="btn btn-info btn-sm editbtn">{{__('Executer le Cron excel')}}</span>
+    </a>
+
+    <form class="" action="{{route('admin.indexScriptStore')}}" method="POST" enctype="multipart/form-data">
         @csrf
         <div class="row">
             <div class="col-lg-12">
@@ -35,7 +39,7 @@
             </div>
         </div>
         <div class="col-12 text-center">
-            <button type="submit" id="submitBtn" class="btn btn-success">{{__('Importer le fichier')}}</button>
+            <button type="submit"  class="btn btn-success">{{__('Importer le fichier')}}</button>
         </div>
     </form>
 @endsection
