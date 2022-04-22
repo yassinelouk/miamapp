@@ -785,6 +785,9 @@
                   <a href="{{route('admin.indexScript')}}">
                     <span class="sub-item">{{__('Import script')}}</span>
                   </a>
+                  <a href="{{route('admin.gallery')}}">
+                    <span class="sub-item">{{__('Pictures gallery')}}</span>
+                  </a>
                 </li>
               </ul>
             </div>

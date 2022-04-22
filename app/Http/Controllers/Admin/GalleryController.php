@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use Session;
+use Validator;
+use App\Models\Gallery;
+use App\Models\Language;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Str;
-use App\Models\Language;
-use App\Models\Gallery;
-use Validator;
-use Session;
+use Illuminate\Support\Facades\File;
 
 class GalleryController extends Controller
 {
@@ -16,7 +17,7 @@ class GalleryController extends Controller
     {
         $lang = Language::where('code', $request->language)->first();
 
-        $lang_id = $lang->id;
+        $lang_id = 1;
         $data['galleries'] = Gallery::where('language_id', $lang_id)->orderBy('id', 'DESC')->get();
 
         $data['lang_id'] = $lang_id;
@@ -151,5 +152,34 @@ class GalleryController extends Controller
 
         Session::flash('success', 'Image deleted successfully!');
         return "success";
+    }
+
+    public function addPictures() {
+        $path = public_path('assets/front/img/product/featured/gallery');
+        $filesInFolder = File::allFiles($path);
+        $pictures = array();
+        foreach($filesInFolder as $fileInFolder){
+            $file = pathinfo($fileInFolder);
+            $pictures[] = $file['basename'];
+        }
+        return view('admin.gallery.add', compact('pictures'));
+    }
+
+    public function storePictures(Request $request) {
+        $allowedExts = array('jpg', 'png', 'jpeg');
+        if ($request->hasFile('pictures')) {
+            foreach ($request->file('pictures') as $img) {
+                $ext = $img->getClientOriginalExtension();
+                // if (!in_array($ext, $allowedExts)) {
+                //     return Session::flash('danger', 'Only png, jpg, jpeg image is allowed');
+                // }
+            }
+            foreach ($request->file('pictures') as $img) {
+                $filename = Str::random(5) . '.' . $img->getClientOriginalExtension();
+                $img->move('assets/front/img/product/featured/gallery/', $filename);
+            }
+        }
+        Session::flash('success', 'Images uploaded successfully!');
+        return redirect()->route('admin.gallery');
     }
 }

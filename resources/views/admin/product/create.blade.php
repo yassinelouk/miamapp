@@ -1,4 +1,9 @@
 @extends('admin.layout')
+
+@section('css')
+   <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+@endsection
+
 @section('content')
 <div class="page-header">
    <h4 class="page-title">{{__('Items Management')}}: {{__('add new')}}</h4>
@@ -50,7 +55,7 @@
                   <!--</div>-->
 
                   {{-- Featured image upload end --}}
-                  <form id="ajaxForm" class="" action="{{route('admin.product.store')}}" method="post" enctype="multipart/form-data">
+                  <form id="sendForm" class="" action="{{route('admin.product.store')}}" method="post" enctype="multipart/form-data">
                      @csrf
                      <div class="row">
                         <div class="col-lg-12">
@@ -59,11 +64,11 @@
                               <label for="image"><strong>{{__('Image')}}</strong></label>
                             </div>
                             <div class="col-md-12 showImage mb-3">
-                              <img src="{{asset('assets/admin/img/noimage.jpg')}}" alt="..." class="img-thumbnail">
+                              <img id="img-display" src="{{asset('assets/admin/img/noimage.jpg')}}" alt="..." class="img-thumbnail">
                             </div>
                             <div class="d-flex">
                               <input type="file" name="feature_image" id="image" class="form-control image col-9">
-                              <button class="btn btn-primary col-3 d-inline-block" data-toggle="modal" data-target="#gallery">{{__('Choose from gallery')}}</button>
+                              <button type="button" class="btn btn-primary col-3 d-inline-block" data-toggle="modal" data-target="#gallery">{{__('Choose from gallery')}}</button>
                             </div>
                             <p id="errfeature_image" class="mb-0 text-danger em"></p>
                           </div>
@@ -228,6 +233,7 @@
                         </div>
                         {{-- Addons End --}}
                      </div>
+                     <input id="gallery_img" type="text" name="gallery_img" hidden value="">
                   </form>
                </div>
             </div>
@@ -236,13 +242,13 @@
             <div class="form">
                <div class="form-group from-show-notify row">
                   <div class="col-12 text-center">
-                     <button type="submit" id="submitBtn" class="btn btn-success">{{__('Submit')}}</button>
+                     <button type="submit" class="btn btn-success" onclick="sendForm()">{{__('Submit')}}</button>
                   </div>
                </div>
             </div>
          </div>
          <div class="modal fade" id="gallery" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 80%;">
               <div class="modal-content">
                 <div class="modal-header">
                   <h5 class="modal-title" id="exampleModalLongTitle">{{__('Choose an image')}}</h5>
@@ -250,15 +256,22 @@
                     <span aria-hidden="true">&times;</span>
                   </button>
                 </div>
-                {{-- <div class="modal-body">
-                    @foreach ($allMedia ?? '' as $media)
-                        <img src="{{ asset('images/' .$media .'') }}" width="100" height="100" style="object-fit: contain; margin: 10px;" onclick="selectElement(this)">
-                    @endforeach
-                </div> --}}
+                <div class="modal-body">
+                    <section style="background-color: #f2f2f2; padding: 20px; border-radius: 10px; margin-top: 30px; width: 100%;">
+                     <div class="row" style="display: flex; justify-content: center; align-items: center; height: 700px; overflow: auto;">
+                         @foreach ($pictures as $picture)
+                           <div onclick="selectElement(this)" style="margin: 25px 10px; padding: 5px;">
+                              <img data-picture-name="{{ $picture }}" style="object-fit: contain; width: 300px;" src="{{ asset('assets/front/img/product/featured/gallery/' . $picture) }}" alt="" >
+                           </div>
+
+                         @endforeach
+                     </div>
+                 </section>
+                </div>
                 <div class="modal-footer" style="justify-content: space-between;">
                   <div>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">{{__('Close')}}</button>
-                    <button type="submit" class="btn btn-primary">{{__('Save')}}</button>
+                    <button class="btn btn-primary" onclick="getImgPath()" data-dismiss="modal">{{__('Save')}}</button>
                   </div>
                 </div>
               </div>
@@ -280,12 +293,17 @@
 @section('js')
    <script>
       function selectElement(img) {
-         if ($(img).css('outline') == 'rgb(53, 128, 234) solid 3px') {
-            $(img).css('outline', '0');
-         }
-         else {
-            $(img).css('outline', 'rgb(53, 128, 234) solid 3px');
-         }
+         $('.selectedPicture').removeClass('selectedPicture');
+         $(img).addClass('selectedPicture');
+      }
+
+      function getImgPath() {
+         $("#img-display").attr('src', $(document.querySelector('.selectedPicture img')).attr('src'));
+         $("#gallery_img").val( $(document.querySelector('.selectedPicture img')).attr('data-picture-name') );
+      }
+
+      function sendForm() {
+         $('#sendForm').trigger('submit');
       }
    </script>
 @endsection

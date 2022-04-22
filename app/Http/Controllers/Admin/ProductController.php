@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Str;
-use App\Models\BasicExtended as BE;
-use App\Models\BasicSetting as BS;
-use App\Models\Language;
-use App\Models\Pcategory;
-use App\Models\ProductImage;
-use App\Models\Product;
+use Session;
 use Purifier;
 use Validator;
-use Session;
+use App\Models\Product;
+use App\Models\Language;
+use App\Models\Pcategory;
+use Illuminate\Support\Str;
+use App\Models\ProductImage;
+use Illuminate\Http\Request;
+use App\Models\BasicSetting as BS;
+use App\Models\BasicExtended as BE;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\File;
 
 class ProductController extends Controller
 {
@@ -32,7 +33,14 @@ class ProductController extends Controller
     {
         $lang = Language::where('code', $request->language)->first();
         $categories = Pcategory::where('status',1)->get();
-        return view('admin.product.create',compact('categories'));
+        $path = public_path('assets/front/img/product/featured/gallery');
+        $filesInFolder = File::allFiles($path);
+        $pictures = array();
+        foreach($filesInFolder as $fileInFolder){
+            $file = pathinfo($fileInFolder);
+            $pictures[] = $file['basename'];
+        }
+        return view('admin.product.create',compact('categories', 'pictures'));
     }
 
     public function sliderstore(Request $request)
@@ -90,7 +98,6 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
-
         $img = $request->file('feature_image');
         $allowedExts = array('jpg', 'png', 'jpeg');
         $slug = make_slug($request->title);
@@ -132,6 +139,11 @@ class ProductController extends Controller
             $filename = time() . '.' . $img->getClientOriginalExtension();
             $request->file('feature_image')->move('assets/front/img/product/featured/', $filename);
             $in['feature_image'] = $filename;
+        }
+        else {
+            if (!empty($request->gallery_img)) {
+                $in['feature_image'] = "gallery/" . $request->gallery_img;
+            }
         }
 
 
@@ -201,16 +213,16 @@ class ProductController extends Controller
         $data = Product::findOrFail($id);
         return view('admin.product.edit',compact('categories','data'));
     }
-    
+
     public function duplicate(Request $request , $id)
     {
         $product = Product::with('product_images','category','product_reviews','language')->where('id' , $id)->first();
 
-        
+
         $newModel = $product->replicate();
         $newModel->push();
-        
-        
+
+
 
         $data = $product ;
         $lang = Language::where('code', $request->language)->first();
@@ -218,7 +230,7 @@ class ProductController extends Controller
         $categories = $lang->pcategories()->where('status',1)->get();
         return view('admin.product.edit',compact('categories','data'));
     }
-    
+
     public function images($portid)
     {
         $images = ProductImage::where('product_id', $portid)->get();
