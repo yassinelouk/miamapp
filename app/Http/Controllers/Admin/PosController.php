@@ -538,7 +538,8 @@ class PosController extends Controller
 
         $be = BasicExtended::first();
         $bs = BasicSetting::first();
-        $table = Table::where('table_no', $request->table_no )->first();
+        $table = Table::where('table_no', $request->table_no)->first();
+        // return response()->json($table);
         if ($table->status == 1) {
             // store in `product_orders`
             $po = new ProductOrder;
@@ -671,7 +672,7 @@ class PosController extends Controller
                     }
                     $addonTotal = $addonTotal * (int)$cartItem->qty;
                 }
-                // $vprice = !empty($cartItem->variations) ? (float)$cartItem["variations"]["price"] * (int)$cartItem["qty"] : 0.00;
+                $vprice = !empty($cartItem->variations) ? (float)$cartItem->variations->price * (int)$cartItem->qty : 0.00;
                 $pprice = (float)$cartItem->product_price * (int)$cartItem->qty;
 
 
@@ -687,9 +688,9 @@ class PosController extends Controller
                     $orderitem->user_id  = Auth::check() ? Auth::user()->id : NULL;
                     $orderitem->title  = $cartItem->name;
                     $orderitem->variations  =  json_encode($cartItem->variations);
-                    // $orderitem->addons  =  json_encode($cartItem["addons"]);
-                    // $orderitem->notes  = $cartItem["notes"];
-                    // $orderitem->variations_price  = $vprice;
+                    $orderitem->addons =  json_encode($cartItem->addons);
+                    $orderitem->notes  = $cartItem->notes;
+                    $orderitem->variations_price  = $vprice;
                     $orderitem->addons_price = 0;
                     $orderitem->product_price  =  $pprice;
                     $orderitem->total  =  $pprice + $addonTotal;

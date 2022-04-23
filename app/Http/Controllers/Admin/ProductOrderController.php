@@ -797,9 +797,9 @@ class ProductOrderController extends Controller
         return back();
     }
 
-    public function orderDeleteApi($id)
+    public function orderDeleteApi(Request $request)
     {
-        $order = ProductOrder::findOrFail($id);
+        $order = ProductOrder::findOrFail($request->order_id);
         @unlink('assets/front/invoices/product/' . $order->invoice_number);
         foreach ($order->orderitems as $item) {
             $item->delete();
@@ -823,8 +823,8 @@ class ProductOrderController extends Controller
             $table->save();
         }
         $order->delete();
-        Session::flash('success',trans_choice('admin_panel.delete',count($order->orderitems),['Item' => __('Product')]));
-        return back();
+        return response()->json('order deleted');
+
     }
 
     public function qrPrint(Request $request) {
