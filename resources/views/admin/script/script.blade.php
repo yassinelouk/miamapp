@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="page-header">
-    <h4 class="page-title">Importer vos produits a partir d'un fichier excel</h4>
+    <h4 class="page-title">Importer vos produits a partir d'un fichier Excel ou JSON</h4>
     <ul class="breadcrumbs">
       <li class="nav-home">
         <a href="{{route('admin.dashboard')}}">
@@ -18,7 +18,7 @@
     </ul>
   </div>
     <a href="{{route('admin.indexScriptshow')}}">
-        <span class="btn btn-info btn-sm editbtn">{{__('Executer le Cron')}}</span>
+        <span class="btn btn-info btn-sm editbtn">{{__('Executer le Cron JSON')}}</span>
     </a>
 
     <a href="{{route('admin.excelScript')}}">
